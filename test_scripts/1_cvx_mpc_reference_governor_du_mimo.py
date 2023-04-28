@@ -15,45 +15,16 @@ if __name__ == "__main__":
 
     # Discrete time model of a frictionless mass (pure integrator)
     Ts = 1.0
-    # r_den = 0.9  # magnitude of poles
-    # wo_den = 0.2  # phase of poles (approx 2.26 kHz)
-    #
-    # # Build a second-order discrete-time dynamics with dcgain=1 (inner loop model)
-    # H_sys = control.TransferFunction([1], [1, -2 * r_den * np.cos(wo_den), r_den ** 2], Ts)
-    # H_sys = H_sys / control.dcgain(H_sys)
-    # H_ss = control.ss(H_sys)
-    #
-    # # SISO ABCD
-    # Ad = np.array(H_ss.A)
-    # Bd = np.array(H_ss.B)
-    # Cd = np.array(H_ss.C)
-    # Dd = np.array(H_ss.D)
-    #
-    #
-    #
-    # # MIMO ABCD
-    # Ad = scipy.linalg.block_diag(Ad, Ad)
-    # Bd = scipy.linalg.block_diag(Bd, Bd)
-    # Cd = scipy.linalg.block_diag(Cd, 1.5*Cd)
-    # Dd = scipy.linalg.block_diag(Dd, Dd)
-
-
-    # Ad = np.array([[-0.004545,0,0,0,0,0], [0,-0.009615,0,0,0,0],[0,0,-0.004161,0,0,0], [0,0,0,-0.006141,0,0], [0,0,0,0,-0.1,0], [0,0,0,0,0,-0.1]])
-    # Bd = np.array([[0.125,0 ,0  ,0],[0.0625    , 0   ,  0  ,   0],[0  , 0.0625 ,     0  ,   0],[0 , 0.03125  ,  0,  0],[0,   0, 0.125  ,   0],[0    , 0   ,  0  ,  0.125]])
-    # Cd = np.array([[0.1091, 0 ,-0.04527 ,0 ,-0.08, -0.08],[0, 0.05385, 0, -0.01769 , -0.08 ,-0.08]])
-    # Dd = np.array([[0 ,0 ,0, 0 ],[ 0, 0 ,0 ,0]])
 
     Ad = np.array([[-0.02,0,0,0,0,0], [0,-0.01111,0,0,0,0],[0,0,-0.0125,0,0,0], [0,0,0,-0.01667,0,0], [0,0,0,0,-1,0], [0,0,0,0,0,-0.005]])
     Bd = np.array([[0.03125, 0 ],[0 ,  0.03125 ],[ 0.125 ,  0  ],[0 , 0.0625 ],[0.5,   0.5],[ 0  ,  0.125]])
     Cd = np.array([[0.0256, -0.04444,0,0,0,0],[0, 0, 0.1, -0.048, 0, 0], [0, 0, 0, 0, 2, 0] , [0 ,0, 0, 0, 0, 0.2496]])
     Dd = np.array([[0 ,0] ,[0, 0 ],[ 0, 0] ,[0 ,0]])
 
-
     [nx, ng] = Bd.shape  # number of states and number or inputs
     [ny, _] = Cd.shape  # number of outputs
 
     # Constraints
-    # 控制输入初始值ginit
     # ginit = np.array([95,35])  #
     ginit = np.array([2, 2])
     gmin = np.array(ng*[-10000.0]) #- gref
@@ -69,19 +40,13 @@ if __name__ == "__main__":
     # Objective function
     Qy = np.diag(ny*[20])   # or sparse.diags([])
     #QyN = np.diag(2*[20])  # final cost
-    QDy = np.eye(ny)
     Qrg = 100*np.eye(ng)
+
+    # y和g的变化率？
+    QDy = np.eye(ny)
     QDg = 0.5 * sparse.eye(ng)  # Quadratic cost for Du0, Du1, ...., Du_N-1
 
-    # Initial and reference
-    # 初始状态可测？初始状态xint都为0
-    # 如何让y的初始值考虑进来
-    x0 = np.array(nx*[0.0])  # initial state
-    # y0 = np.array([63, 154, 125, -580])
-    y0 = np.array([50, 50, 50, 50])
 
-    # Cd_1 = np.linalg.pinv(Cd)
-    # x0 = np.dot(Cd_1,y0)
 
 
     # Prediction horizon
@@ -128,10 +93,10 @@ if __name__ == "__main__":
     # Simulate in closed loop
     nsim = int(len_sim/Ts)  # simulation length(timesteps)
     xsim = np.zeros((nsim, nx))
-    ysim = np.zeros((nsim, ny))
+    # ysim = np.zeros((nsim, ny))
     ysim_final = np.zeros((nsim, ny))
     ysim_final[0, :] = np.array([100, 100, 100, 100])
-
+    # ysim[0, :] = np.array([0, 0, 0, 0])
 
     gsim = np.zeros((nsim, ng))
     tsol = np.zeros((nsim, 1))
@@ -140,16 +105,24 @@ if __name__ == "__main__":
     gMPC = ginit  # initial previous measured input is the input at time instant -1.
     time_start = time.time()
 
+
+
     # Basic Kalman filter design
     Q_kal = 10 * np.eye(nx)
     R_kal = np.eye(ny)
     L, P, W = kalman_design_simple(Ad, Bd, Cd, Dd, Q_kal, R_kal, type='filter')
     std_npos = 0 * 0.005
 
-    r_y.value = np.array([200, 100, 200, 200])
-    ysim[0, :] = np.array([0, 0, 0, 0])
+
+    # Initial and reference
+    # 初始状态可测？初始状态xint都为0
+    # 如何让y的初始值考虑进来
+    x0 = np.array(nx*[0.0])  # initial state
+    # y0 = np.array([63, 154, 125, -580])
+    y0 = np.array([50, 50, 50, 50])
 
     # 设置控制输入和控制输出参考值
+    r_y.value = np.array([200, 100, 200, 200])
     r_u.value = np.array([50, 50])  # Reference output
 
     for i in range(nsim):
@@ -169,8 +142,8 @@ if __name__ == "__main__":
 
 
         # 测试
-        if i < 99:
-            ysim[i+1, :] = yold
+        # if i < 99:
+        #     ysim[i+1, :] = yold
         # print('x0:', x0)
         # print('gMPC:', gMPC)
         # print('yold', yold)
