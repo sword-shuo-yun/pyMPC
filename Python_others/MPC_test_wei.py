@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 @Project ：python_mpc 
-@File    ：MPC_test_kai.py
+@File    ：MPC_test_wei.py
 @Author  ：梁伟
 @mail    ：1461334995@qq.com
 @Date    ：2023/4/20 16:11 
