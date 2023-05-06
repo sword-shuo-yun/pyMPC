@@ -75,7 +75,7 @@ def prediction(H, E, p):
 
 E, H = cal_matrices(A, B, C, D, Q, R, F, N)
 
-C_pinv = np.linalg.pinv(C)
+# C_pinv = np.linalg.pinv(C)
 k_step = 500
 
 # Basic Kalman filter design
