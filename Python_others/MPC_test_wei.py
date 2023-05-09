@@ -5,7 +5,9 @@
 @File    ：MPC_test_wei.py
 @Author  ：梁伟
 @mail    ：1461334995@qq.com
-@Date    ：2023/4/20 16:11 
+@Date    ：2023/4/20 16:11
+
+Note:使用了伪逆矩阵，没有使用kalman滤波进行估计
 """
 import matplotlib.pyplot as plt
 import scipy.linalg
@@ -45,9 +47,17 @@ def cal_matrices(A, B, C, D, Q, R, F, N):
                 (np.dot(temp, B), L[rows - n: rows, 0:(N - 1) * p]))
         temp = np.dot(temp, A)
         M[rows:rows + n, :] = temp
+
+    # N*N，对角为Q的对角矩阵
     Q_bar_be = np.kron(np.eye(N), Q)
+    # 对角为Q，并加一个F的对角矩阵
     Q_bar = scipy.linalg.block_diag(Q_bar_be, F)
     R_bar = np.kron(np.eye(N), R)
+
+    # 对应PPT里面：
+    # E = M.T @ Q_bar @ L
+    # H = L.T @ Q_bar @ L + R_bar
+    # 其中M = C_bar @ M, L = C_bar @ L
     E = M.T @ C_bar.T @ Q_bar @ C_bar @ L
     H = L.T @ C_bar.T @ Q_bar @ C_bar @ L + R_bar
 
@@ -71,14 +81,7 @@ U_k = np.zeros((p, k_step))
 Y_k[:, 0] = np.array([10, -10])
 u0 = np.array([[[0], [0]]])
 
-# # Basic Kalman filter design
-# Q_kal = 10 * np.eye(n)
-# R_kal = np.eye(m)
-# L, P, W = kalman_design_simple(A, B, C, D, Q_kal, R_kal,
-#                                type = 'predictor')
-# x0 = np.array([[0], [0]])
-# x0_est = x0
-# KF = LinearStateEstimator(x0_est, A, B, C, D, L)
+
 r_k = np.zeros((m, k_step))
 r_k[:, 0:1] = r
 
@@ -94,16 +97,14 @@ for k in range(1, k_step):
     r_k[:, k - 1:k] = r
     y_delta = Y_k[:, k - 1:k] - r
     y_delta = y_delta.reshape(m, 1)
-    # y_meas = Y_k[:, k:k + 1] - r
-    # x_est_k = X_k[:, k:k + 1]
+
+    # J= x(k|k).T @ E @ U + U.T @ H @ U
+    # 根据solvers.qp(H,E)参数的要求，E需要转置，也就是传入给E的应该是E.T
     x_delta = C_pinv @ y_delta
     T = x_delta.T @ E
     T = matrix(T.T)
     H = matrix(H)
     u_k_delta = prediction(H, T, p)
-
-    # KF.update(y_meas)
-    # KF.predict(u_k_delta)
 
     x_1_delta = A @ x_delta + B @ u_k_delta
     y_1_delta = C @ x_1_delta

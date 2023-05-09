@@ -75,7 +75,6 @@ def prediction(H, E, p):
 
 E, H = cal_matrices(A, B, C, D, Q, R, F, N)
 
-# C_pinv = np.linalg.pinv(C)
 k_step = 500
 
 # Basic Kalman filter design
@@ -87,6 +86,8 @@ x0 = np.array([[0], [0], [0], [0]])
 x0_est = x0
 KF = LinearStateEstimator(x0_est, A, B, C, D, L)
 
+# Y，X和U进行初始化
+# Y_k[:, 0]的初始值为[10, -10]
 Y_k = np.zeros((m, k_step))
 X_k = np.zeros((n, k_step))
 U_k = np.zeros((p, k_step))
@@ -113,6 +114,8 @@ for k in range(k_step - 1):
 
     KF.update(y_meas)
     x_est_k = KF.x
+
+    # 产生什么样结果？
     KF.predict(u_k_delta)
 
     x_1_delta = A @ x_est_k + B @ u_k_delta
