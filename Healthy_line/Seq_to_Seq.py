@@ -179,9 +179,9 @@ temp_index = np.arange(500)
 # In[21]:
 
 
-import win32api,win32con
-import PyQt5
-get_ipython().run_line_magic('matplotlib', 'qt5')
+# import win32api,win32con
+# import PyQt5
+# get_ipython().run_line_magic('matplotlib', 'qt5')
 
 
 # In[22]:
@@ -233,9 +233,9 @@ for i in range(500):
     plt.plot(xs, ys, color='red', label='预测分解炉温度')
     plt.plot(xs, ys_0, color='green', label='实际分解炉温度')
     
-    if (inv_y-inv_y_predict) > 15:
-        win32api.MessageBox(0, "分解炉温度异常，请检查！\n分解炉当前温度：" + str(inv_y) + "\n模型预测温度：" + str(inv_y_predict), 
-                            "重要提醒", win32con.MB_OK)
+    # if (inv_y-inv_y_predict) > 15:
+    #     win32api.MessageBox(0, "分解炉温度异常，请检查！\n分解炉当前温度：" + str(inv_y) + "\n模型预测温度：" + str(inv_y_predict),
+    #                         "重要提醒", win32con.MB_OK)
         
     if i == 0:
         plt.legend()
